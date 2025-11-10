@@ -8,6 +8,7 @@ from models.atleta import AtletaModel
 from models.categoria import CategoriaModel
 from models.centro_treinamento import CentroTreinamentoModel
 from config.database import get_async_db
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter(prefix="/atletas", tags=["Atletas"])
 
@@ -51,10 +52,16 @@ async def create_atleta(atleta: AtletaIn, db: AsyncSession = Depends(get_async_d
         centro_treinamento_id=centro_treinamento.id,
         created_at=datetime.utcnow()
     )
-
-    db.add(new_atleta)
-    await db.commit()
-    await db.refresh(new_atleta)
+    try:
+        db.add(new_atleta)
+        await db.commit()
+        await db.refresh(new_atleta)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=303,
+            detail=f"Atleta com CPF {atleta.cpf} já existe."
+        )
 
     
     return AtletaOut(
