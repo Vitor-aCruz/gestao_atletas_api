@@ -15,7 +15,7 @@ async def create_centro_treinamento(centro: CentroTreinamentoIn, db=Depends(get_
         localizacao=centro.localizacao,
         proprietario=centro.proprietario
     )
-    existing_centro = await db.execute(select(CentroTreinamentoModel))
+    existing_centro = await db.execute(select(CentroTreinamentoModel).filter_by(nome=centro.nome))
     if existing_centro.scalars().first():  
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Centro ja existe")
     
