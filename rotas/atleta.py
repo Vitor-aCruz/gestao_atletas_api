@@ -106,8 +106,13 @@ async def list_atletas(db: AsyncSession = Depends(get_async_db), pagination: dic
     atletas = result.scalars().all()
     return [AtletaOut.model_validate(atleta) for atleta in atletas]
 
-@router.patch("/atletas/{atleta_id}", response_model=AtletaOut)
-async def update_atleta(atleta_id: int, atleta_update: AtletaIn, session: AsyncSession = Depends(get_async_db)):
+@router.patch("/{atleta_id}", response_model=AtletaOut)
+async def update_atleta(
+    atleta_id: int, 
+    atleta_update: AtletaIn, 
+    session: AsyncSession = Depends(get_async_db)
+):
+    # Busca o atleta
     result = await session.execute(select(AtletaModel).filter(AtletaModel.pk_id == atleta_id))
     atleta = result.scalars().first()
 
@@ -116,51 +121,59 @@ async def update_atleta(atleta_id: int, atleta_update: AtletaIn, session: AsyncS
 
     data = atleta_update.model_dump(exclude_unset=True)
 
+    # Atualiza Categoria se enviada
     if "categoria" in data:
         categoria_info = data["categoria"]
 
-    
-    if "pk_id" in categoria_info:
-        filtro = CategoriaModel.pk_id == categoria_info["pk_id"]
-    elif "id" in categoria_info:
-        filtro = CategoriaModel.pk_id == categoria_info["id"]
-    elif "nome" in categoria_info:
-        filtro = CategoriaModel.nome == categoria_info["nome"]
-    else:
-        raise HTTPException(status_code=400, detail="Categoria inválida")
+        filtro_categoria = None
+        if "pk_id" in categoria_info:
+            filtro_categoria = CategoriaModel.pk_id == categoria_info["pk_id"]
+        elif "id" in categoria_info:
+            filtro_categoria = CategoriaModel.pk_id == categoria_info["id"]
+        elif "nome" in categoria_info:
+            filtro_categoria = CategoriaModel.nome == categoria_info["nome"]
+        else:
+            raise HTTPException(status_code=400, detail="Categoria inválida")
 
-    result = await session.execute(select(CategoriaModel).filter(filtro))
-    categoria = result.scalars().first()
-    if not categoria:
-        raise HTTPException(status_code=404, detail="Categoria não encontrada")
-    atleta.categoria = categoria
-    del data["categoria"]
+        result = await session.execute(select(CategoriaModel).filter(filtro_categoria))
+        categoria = result.scalars().first()
 
+        if not categoria:
+            raise HTTPException(status_code=404, detail="Categoria não encontrada")
 
+        atleta.categoria = categoria
+        del data["categoria"]  # Remove do dict para não reenviar depois
+
+    # Atualiza Centro de Treinamento se enviado
     if "centro_treinamento" in data:
         ct_info = data["centro_treinamento"]
 
-    if "id" in ct_info:
-        filtro_ct = CentroTreinamentoModel.id == ct_info["id"]
-    elif "nome" in ct_info:
-        filtro_ct = CentroTreinamentoModel.nome == ct_info["nome"]
-    else:
-        raise HTTPException(status_code=400, detail="Centro de Treinamento inválido")
+        filtro_ct = None
+        if "id" in ct_info:
+            filtro_ct = CentroTreinamentoModel.id == ct_info["id"]
+        elif "nome" in ct_info:
+            filtro_ct = CentroTreinamentoModel.nome == ct_info["nome"]
+        else:
+            raise HTTPException(status_code=400, detail="Centro de Treinamento inválido")
 
-    result = await session.execute(select(CentroTreinamentoModel).filter(filtro_ct))
-    ct = result.scalars().first()
-    if not ct:
-        raise HTTPException(status_code=404, detail="Centro de Treinamento não encontrado")
-    atleta.centro_treinamento = ct
-    del data["centro_treinamento"]
+        result = await session.execute(select(CentroTreinamentoModel).filter(filtro_ct))
+        ct = result.scalars().first()
 
-    # ⚙️ Atualiza os demais campos
+        if not ct:
+            raise HTTPException(status_code=404, detail="Centro de Treinamento não encontrado")
+
+        atleta.centro_treinamento = ct
+        del data["centro_treinamento"]
+
+    # Atualiza campos simples
     for key, value in data.items():
         setattr(atleta, key, value)
 
     await session.commit()
     await session.refresh(atleta)
+
     return atleta
+
 
 @router.delete("/{atleta_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_atleta(atleta_id: int, db: AsyncSession = Depends(get_async_db)):
