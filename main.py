@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from config.database import engine, Base
 from fastapi.middleware.cors import CORSMiddleware
 from rotas import categoria, centro_treinamento, atleta
-from fastapi_pagination import add_pagination
+
 
 app = FastAPI(title="Workout API")
 
@@ -30,4 +30,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi_pagination import add_pagination
 add_pagination(app)

@@ -37,7 +37,7 @@ async def get_centro_treinamento(centro_id: int, db: AsyncSession = Depends(get_
         id=centro.id,
         nome=centro.nome
     )
-@router.get("/", response_model=list[CentroTreinamentoOut])
+@router.get("/", response_model=Page[CentroTreinamentoOut])
 async def list_centros_treinamento(db=Depends(get_async_db)):
     result = await db.execute(select(CentroTreinamentoModel))
     centros = result.scalars().all()

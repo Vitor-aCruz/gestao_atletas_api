@@ -98,7 +98,7 @@ async def get_atleta(atleta_id: int, session: AsyncSession = Depends(get_async_d
     
     return atleta
 
-@router.get("/", response_model=list[AtletaOut])
+@router.get("/", response_model=Page[AtletaOut])
 async def list_atletas(db: AsyncSession = Depends(get_async_db)):     
     result = await db.execute(select(AtletaModel))
     atletas = result.scalars().all()

@@ -1,5 +1,5 @@
 from typing import Annotated
-from pydantic import Field, PositiveFloat
+from pydantic import ConfigDict, Field, PositiveFloat
 from schemas.base import BaseSchema, OutMixin
 from schemas.categoria import CategoriaIn
 from schemas.centro_treinamento import CentroTreinamentoAtleta
@@ -18,4 +18,5 @@ class AtletaIn(Atleta):
     pass
 
 class AtletaOut(Atleta, OutMixin):
+    model_config = ConfigDict(from_attributes=True)
     pass

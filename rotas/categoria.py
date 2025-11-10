@@ -29,7 +29,7 @@ async def get_categoria(categoria_id: int, db: AsyncSession = Depends(get_async_
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Categoria not found")
     return CategoriaOut(id=categoria.pk_id, nome=categoria.nome)
 
-@router.get("/", response_model=list[CategoriaOut])
+@router.get("/", response_model=Page[CategoriaOut])
 async def list_categorias(db: AsyncSession = Depends(get_async_db)):
     result = await db.execute(select(CategoriaModel))
     categorias = result.scalars().all()

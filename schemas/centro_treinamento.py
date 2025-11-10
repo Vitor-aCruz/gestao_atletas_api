@@ -1,5 +1,5 @@
 from typing import Annotated
-from pydantic import Field
+from pydantic import ConfigDict, Field
 from schemas.base import BaseSchema
 
 class CentroTreinamentoIn(BaseSchema):
@@ -12,3 +12,4 @@ class CentroTreinamentoAtleta(BaseSchema):
     
 class CentroTreinamentoOut(CentroTreinamentoAtleta):
     id: Annotated[int, Field(description="Identificador")]
+    model_config = ConfigDict(from_attributes=True)
