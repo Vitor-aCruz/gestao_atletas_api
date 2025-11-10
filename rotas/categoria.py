@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from config.pagination import pagination_params
+from fastapi_pagination import paginate, Page
 from schemas.categoria import CategoriaIn, CategoriaOut
 from models.categoria import CategoriaModel
 from sqlalchemy.future import select
@@ -30,9 +30,7 @@ async def get_categoria(categoria_id: int, db: AsyncSession = Depends(get_async_
     return CategoriaOut(id=categoria.pk_id, nome=categoria.nome)
 
 @router.get("/", response_model=list[CategoriaOut])
-async def list_categorias(db: AsyncSession = Depends(get_async_db), pagination: dict = Depends(pagination_params)):
-    result = await db.execute(select(CategoriaModel)
-                              .limit(pagination["limit"])
-                              .offset(pagination["offset"]))
+async def list_categorias(db: AsyncSession = Depends(get_async_db)):
+    result = await db.execute(select(CategoriaModel))
     categorias = result.scalars().all()
-    return [CategoriaOut(id=c.pk_id, nome=c.nome) for c in categorias]
+    return paginate(categorias)

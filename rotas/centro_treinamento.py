@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from config.pagination import pagination_params
+from fastapi_pagination import paginate, Page
 from schemas.centro_treinamento import CentroTreinamentoIn, CentroTreinamentoOut
 from models.centro_treinamento import CentroTreinamentoModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,9 +38,7 @@ async def get_centro_treinamento(centro_id: int, db: AsyncSession = Depends(get_
         nome=centro.nome
     )
 @router.get("/", response_model=list[CentroTreinamentoOut])
-async def list_centros_treinamento(db=Depends(get_async_db), pagination: dict = Depends(pagination_params)):
-    result = await db.execute(select(CentroTreinamentoModel)
-                              .limit(pagination["limit"])
-                              .offset(pagination["offset"]))
+async def list_centros_treinamento(db=Depends(get_async_db)):
+    result = await db.execute(select(CentroTreinamentoModel))
     centros = result.scalars().all()
-    return [CentroTreinamentoOut(id=c.id, nome=c.nome) for c in centros]
+    return paginate(centros)

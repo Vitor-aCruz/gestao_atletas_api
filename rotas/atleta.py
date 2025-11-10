@@ -1,8 +1,8 @@
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi_pagination import paginate, Page
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from config.pagination import pagination_params
 from schemas.atleta import AtletaIn, AtletaOut
 from models.atleta import AtletaModel
 from models.categoria import CategoriaModel
@@ -99,12 +99,10 @@ async def get_atleta(atleta_id: int, session: AsyncSession = Depends(get_async_d
     return atleta
 
 @router.get("/", response_model=list[AtletaOut])
-async def list_atletas(db: AsyncSession = Depends(get_async_db), pagination: dict = Depends(pagination_params)):
-    query = select(AtletaModel).limit(pagination["limit"]).offset(pagination["offset"])
-    
-    result = await db.execute(query)
+async def list_atletas(db: AsyncSession = Depends(get_async_db)):     
+    result = await db.execute(select(AtletaModel))
     atletas = result.scalars().all()
-    return [AtletaOut.model_validate(atleta) for atleta in atletas]
+    return paginate(atletas)
 
 @router.patch("/{atleta_id}", response_model=AtletaOut)
 async def update_atleta(
